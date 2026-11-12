@@ -179,7 +179,7 @@ pub(crate) fn csv_preview_pane(
             .when_some(grid_focus.as_ref(), |pane, handle| pane.track_focus(handle))
             .when_some(input_bridge, |pane, bridge| pane.child(bridge))
             .when_some(draft_strip, |pane, strip| pane.child(strip))
-            .child(div().flex_grow().flex().flex_col().items_center().justify_center().gap(rems(1.))
+            .child(div().flex_grow_1().flex().flex_col().items_center().justify_center().gap(rems(1.))
                 .child(error).child(div().id("csv-grid-source-view").cursor(CursorStyle::PointingHand)
                     .child("Source View").on_mouse_down(MouseButton::Left, move |_, window, cx| {
                         source.update(cx, |w, cx| w.view_csv_source(&crate::actions::ViewCsvSource, window, cx));
@@ -207,7 +207,7 @@ pub(crate) fn csv_preview_pane(
             .when_some(draft_strip, |pane, strip| pane.child(strip))
             .child(
                 div()
-                    .flex_grow()
+                    .flex_grow_1()
                     .flex()
                     .flex_col()
                     .items_center()
@@ -274,7 +274,7 @@ pub(crate) fn csv_preview_pane(
         .child(
             div()
                 .id("csv-grid-body")
-                .flex_grow()
+                .flex_grow_1()
                 .overflow_y_scroll()
                 .overflow_x_scroll()
                 .track_scroll(&scroll_handle)
@@ -398,7 +398,7 @@ fn render_header(
                 .into_any_element()
         } else {
             div()
-                .flex_grow()
+                .flex_grow_1()
                 .min_w_0()
                 .text_color(rgb(theme.chrome_text))
                 .child(div().truncate().child(label_display))
@@ -628,7 +628,7 @@ fn render_header(
     // broken next to the body rows that also have their own fillers.
     row = row.child(
         div()
-            .flex_grow()
+            .flex_grow_1()
             .h_full()
             .bg(rgb(theme.chrome)),
     );
@@ -931,7 +931,7 @@ fn render_body(
         // so the highlight reads as a full-width band like Excel.
         row_div = row_div.child(
             div()
-                .flex_grow()
+                .flex_grow_1()
                 .h_full()
                 .when(row_selected, |d| d.bg(rgb(selection_overlay_color(theme)))),
         );

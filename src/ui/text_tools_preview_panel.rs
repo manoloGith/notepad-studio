@@ -90,7 +90,7 @@ pub(crate) fn text_tools_preview_panel(
         .border_color(rgb(theme.border))
         .child(
             div()
-                .flex_grow()
+                .flex_grow_1()
                 .text_color(rgb(theme.text))
                 .text_size(rems(12. / 16.))
                 .child(title),
@@ -119,7 +119,7 @@ pub(crate) fn text_tools_preview_panel(
         .child(header)
         .child(
             div()
-                .flex_grow()
+                .flex_grow_1()
                 .min_h(px(0.))
                 .overflow_hidden()
                 .child(body),

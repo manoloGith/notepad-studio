@@ -331,7 +331,7 @@ impl Workspace {
         let step = px(20.);
         let cap = step * 3.;
         let mut offset = self.md_preview_scroll_handle.offset();
-        let max_y = self.md_preview_scroll_handle.max_offset().height;
+        let max_y = self.md_preview_scroll_handle.max_offset().y;
         let delta;
         if position.y < top {
             // Cursor past top edge — scroll content down (offset.y toward
@@ -393,7 +393,7 @@ impl Workspace {
         }
         let task = cx.spawn(async move |this, cx| {
             loop {
-                gpui::Timer::after(Duration::from_millis(30)).await;
+                cx.background_executor().timer(Duration::from_millis(30)).await;
                 let keep_going = this
                     .update(cx, |w, cx| {
                         if !w.preview_is_dragging() {

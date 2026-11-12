@@ -73,7 +73,7 @@ fn build_menus(state: &MenuState, file_menu: Menu, macos: bool) -> Vec<Menu> {
 
 /// Drop `&` access-key markers for a menu system that has none (macOS).
 fn strip_mnemonics(menu: Menu) -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: mnemonic::strip(&menu.name).into(),
         items: menu
             .items
@@ -84,11 +84,13 @@ fn strip_mnemonics(menu: Menu) -> Menu {
                     action,
                     os_action,
                     checked,
+                    disabled,
                 } => MenuItem::Action {
                     name: mnemonic::strip(&name).into(),
                     action,
                     os_action,
                     checked,
+                    disabled,
                 },
                 MenuItem::Submenu(sub) => MenuItem::Submenu(strip_mnemonics(sub)),
                 other => other,

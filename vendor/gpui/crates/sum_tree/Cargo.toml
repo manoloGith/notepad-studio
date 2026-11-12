@@ -14,13 +14,22 @@ path = "src/sum_tree.rs"
 doctest = false
 
 [dependencies]
-arrayvec = "0.7.1"
+heapless.workspace = true
 rayon.workspace = true
-log.workspace = true
-# ztracing (AGPL) replaced with permissive `tracing` for license cleanliness.
+ztracing.workspace = true
 tracing.workspace = true
+proptest = { workspace = true, optional = true }
 
 [dev-dependencies]
+log.workspace = true
 ctor.workspace = true
 rand.workspace = true
-# zlog (GPL) removed — was test-only logging init.
+proptest.workspace = true
+zlog.workspace = true
+
+
+[package.metadata.cargo-shear]
+ignored = ["tracing"]
+
+[features]
+test-support = ["proptest"]

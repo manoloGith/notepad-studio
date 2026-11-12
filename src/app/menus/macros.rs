@@ -29,7 +29,7 @@ pub(crate) fn build(_state: &MenuState) -> Menu {
             ));
         }
     }
-    Menu {
+    Menu { disabled: false,
         name: "&Macro".into(),
         items,
     }

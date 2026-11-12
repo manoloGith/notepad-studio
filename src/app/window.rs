@@ -52,7 +52,7 @@ pub(crate) fn spawn_caret_blink(cx: &mut Context<Workspace>) {
             // Re-read each tick so a Preferences edit lands on the next blink
             // without needing to restart this task.
             let interval = crate::settings::caret_blink_interval_ms();
-            gpui::Timer::after(Duration::from_millis(interval as u64)).await;
+            cx.background_executor().timer(Duration::from_millis(interval as u64)).await;
             if this
                 .update(cx, |w, cx| {
                     w.caret_visible = !w.caret_visible;
@@ -78,7 +78,7 @@ pub(crate) fn spawn_periodic_backup(cx: &mut Context<Workspace>) {
     cx.spawn(async move |this, cx| {
         loop {
             let interval = crate::settings::backup_periodic_interval_ms();
-            gpui::Timer::after(Duration::from_millis(interval as u64)).await;
+            cx.background_executor().timer(Duration::from_millis(interval as u64)).await;
             let snap = crate::settings::snapshot();
             if !snap.backup_periodic_enabled {
                 continue;

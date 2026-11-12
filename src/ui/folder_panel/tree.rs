@@ -146,7 +146,7 @@ pub(crate) fn folder_panel(
             .id("folder-panel-tree")
             .flex()
             .flex_col()
-            .flex_grow()
+            .flex_grow_1()
             .min_h(px(0.))
             .overflow_y_scroll();
         let inline_parent = inline_create.as_ref().map(|snap| snap.parent_dir.as_path());
@@ -222,7 +222,7 @@ fn panel_header(theme: &Theme, workspace: Entity<Workspace>) -> impl IntoElement
         .border_color(rgb(theme.border))
         .text_color(rgb(theme.chrome_text))
         .text_size(rems(11. / 16.))
-        .child(div().flex_grow().child("FOLDERS"))
+        .child(div().flex_grow_1().child("FOLDERS"))
         .child(close_btn)
 }
 
@@ -230,7 +230,7 @@ fn empty_state(theme: &Theme) -> impl IntoElement {
     div()
         .flex()
         .flex_col()
-        .flex_grow()
+        .flex_grow_1()
         .items_center()
         .justify_center()
         .px(rems(12. / 16.))
@@ -406,7 +406,7 @@ fn tree_row(
                 .child(chevron),
         )
         .child(div().w(rems(20. / 16.)).child(icon))
-        .child(div().flex_grow().child(label_str))
+        .child(div().flex_grow_1().child(label_str))
         .cursor(CursorStyle::PointingHand)
         .hover(|s| s.bg(rgb(theme.toggle_active)).text_color(rgb(theme.bg)))
         .on_mouse_down(MouseButton::Left, move |_e, _w, cx| {

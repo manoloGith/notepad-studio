@@ -6,7 +6,7 @@ use crate::actions::*;
 use super::MenuState;
 
 pub(crate) fn build(state: &MenuState) -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "&View".into(),
         items: vec![
             MenuItem::action("Toggle Theme", ViewToggleTheme),
@@ -28,7 +28,7 @@ pub(crate) fn build(state: &MenuState) -> Menu {
 
 fn tab_menu(state: &MenuState) -> Menu {
     let selected = |color| state.has_document && state.tab_color == Some(color);
-    Menu {
+    Menu { disabled: false,
         name: "Ta&b".into(),
         items: vec![
             MenuItem::action("1st Tab", TabGoto1),

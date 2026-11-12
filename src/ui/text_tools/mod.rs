@@ -1318,7 +1318,7 @@ impl Render for TextToolsDialog {
         root.child(
             div()
                 .id("tt-body-scroll")
-                .flex_grow()
+                .flex_grow_1()
                 .min_h(px(0.))
                 .overflow_y_scroll()
                 .px(rems(20. / 16.))
@@ -1568,7 +1568,7 @@ fn render_footer(
         .items_center()
         .gap(rems(10. / 16.))
         .child(status)
-        .child(div().flex_grow());
+        .child(div().flex_grow_1());
     for b in buttons {
         row = row.child(b);
     }

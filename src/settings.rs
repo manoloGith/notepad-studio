@@ -1805,7 +1805,7 @@ static SETTINGS_DIRTY: std::sync::atomic::AtomicBool =
 pub(crate) fn start_settings_refresh_poller(cx: &mut gpui::App) {
     cx.spawn(async move |cx| {
         loop {
-            gpui::Timer::after(std::time::Duration::from_millis(100)).await;
+            cx.background_executor().timer(std::time::Duration::from_millis(100)).await;
             check_external_settings_change();
             if SETTINGS_DIRTY
                 .swap(false, std::sync::atomic::Ordering::Acquire)

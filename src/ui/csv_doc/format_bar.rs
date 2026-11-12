@@ -2,7 +2,7 @@
 // toolbar when the active tab is a CSV in preview mode.
 
 use gpui::{
-    Corner, CursorStyle, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point,
+    Anchor, CursorStyle, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point,
     SharedString, Styled, anchored, deferred, div, prelude::*, px, rems, rgb,
 };
 
@@ -234,7 +234,7 @@ pub(crate) fn csv_delimiter_menu(
                 .child(
                     anchored()
                         .position(position)
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(px(4.))
                         .child(menu),
                 ),

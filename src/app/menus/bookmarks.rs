@@ -6,7 +6,7 @@ use gpui::{Menu, MenuItem};
 use crate::actions::*;
 
 pub(crate) fn build() -> MenuItem {
-    MenuItem::submenu(Menu {
+    MenuItem::submenu(Menu { disabled: false,
         name: "Bookmark".into(),
         items: vec![
             MenuItem::action("Toggle Bookmark", BookmarkToggle),

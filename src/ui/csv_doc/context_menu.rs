@@ -8,7 +8,7 @@
 // widgets up front).
 
 use gpui::{
-    Corner, CursorStyle, Entity, IntoElement, MouseButton, Pixels, Point, anchored, deferred, div,
+    Anchor, CursorStyle, Entity, IntoElement, MouseButton, Pixels, Point, anchored, deferred, div,
     prelude::*, rems, rgb,
 };
 
@@ -280,7 +280,7 @@ pub(crate) fn csv_context_menu(
                 .child(
                     anchored()
                         .position(state.position)
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(gpui::px(4.))
                         .child(menu),
                 ),

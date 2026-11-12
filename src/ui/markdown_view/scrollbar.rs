@@ -82,8 +82,8 @@ impl Element for MarkdownPreviewScrollbar {
         _window: &mut Window,
         _cx: &mut App,
     ) -> Self::PrepaintState {
-        let max_off: Size<Pixels> = self.handle.max_offset();
-        let max_y = max_off.height;
+        let max_off: gpui::Point<Pixels> = self.handle.max_offset();
+        let max_y = max_off.y;
         // Always emit a thumb so the scrollbar strip is visible. When
         // content fits the viewport the thumb fills the track (it can't
         // be dragged — the mouse handlers below short-circuit on

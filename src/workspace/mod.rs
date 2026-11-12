@@ -1363,7 +1363,7 @@ impl Workspace {
         self.autosave_generation = self.autosave_generation.wrapping_add(1);
         let gen = self.autosave_generation;
         cx.spawn(async move |this, cx| {
-            gpui::Timer::after(Duration::from_millis(250)).await;
+            cx.background_executor().timer(Duration::from_millis(250)).await;
             let _ = this.update(cx, |w, cx| {
                 if w.autosave_generation == gen {
                     w.save_session(cx);
@@ -1643,7 +1643,7 @@ impl Workspace {
         };
         let max = self.rich_doc_scroll_handle.max_offset();
         let mut off = self.rich_doc_scroll_handle.offset();
-        let new_y = (off.y + delta).min(px(0.)).max(-max.height);
+        let new_y = (off.y + delta).min(px(0.)).max(-max.y);
         if new_y != off.y {
             off.y = new_y;
             self.rich_doc_scroll_handle.set_offset(off);
@@ -1774,7 +1774,7 @@ impl Workspace {
         let delta = (viewport_h - overlap).max(px(40.));
         let mut offset = self.md_preview_scroll_handle.offset();
         offset.y -= delta * (dir as f32);
-        let max_y = self.md_preview_scroll_handle.max_offset().height;
+        let max_y = self.md_preview_scroll_handle.max_offset().y;
         offset.y = offset.y.max(-max_y).min(px(0.));
         self.md_preview_scroll_handle.set_offset(offset);
         cx.notify();

@@ -93,7 +93,7 @@ struct TabScroll {
 
 impl TabScroll {
     fn of(scroll: &ScrollHandle) -> Self {
-        Self::from_offsets(-scroll.offset().x, scroll.max_offset().width)
+        Self::from_offsets(-scroll.offset().x, scroll.max_offset().x)
     }
 
     /// `scrolled` is how far the strip is scrolled, `max` how far it can go.
@@ -130,7 +130,7 @@ fn step_tab_strip(scroll: &ScrollHandle, forward: bool) {
     let Some(&first) = lefts.first() else { return };
     let starts: Vec<Pixels> = lefts.iter().map(|&left| left - first).collect();
     let offset = scroll.offset();
-    let target = step_target(&starts, -offset.x, scroll.max_offset().width, forward);
+    let target = step_target(&starts, -offset.x, scroll.max_offset().x, forward);
     scroll.set_offset(point(-target, offset.y));
 }
 
@@ -270,7 +270,7 @@ pub(crate) fn tab_strip(
                     .flex()
                     .flex_row()
                     .items_stretch()
-                    .flex_grow()
+                    .flex_grow_1()
                     .child(label_div);
                 if prefs.tab_close_button_visible {
                     row = row.child(
@@ -518,7 +518,7 @@ pub(crate) fn tab_strip_vertical(
             .flex()
             .items_center()
             .h_full()
-            .flex_grow()
+            .flex_grow_1()
             .min_w(rems(0.))
             .pl(rems(8. / 16.))
             .pr(rems(4. / 16.))
@@ -538,7 +538,7 @@ pub(crate) fn tab_strip_vertical(
                 .flex()
                 .flex_row()
                 .items_stretch()
-                .flex_grow()
+                .flex_grow_1()
                 .min_w(rems(0.))
                 .child(label_div);
             if prefs.tab_close_button_visible {

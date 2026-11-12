@@ -26,7 +26,7 @@
 // no entity for the menu itself, only state on the workspace.
 
 use gpui::{
-    Corner, CursorStyle, Entity, IntoElement, MouseButton, Point, anchored, deferred, div,
+    Anchor, CursorStyle, Entity, IntoElement, MouseButton, Point, anchored, deferred, div,
     prelude::*, px, rems, rgb,
 };
 
@@ -126,7 +126,7 @@ pub(crate) fn tab_context_menu(
                 .child(
                     anchored()
                         .position(Point::new(menu_x, menu_y))
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(px(4.))
                         .child(main_panel),
                 )
@@ -134,7 +134,7 @@ pub(crate) fn tab_context_menu(
                     this.child(
                         anchored()
                             .position(state.submenu_anchor)
-                            .anchor(Corner::TopLeft)
+                            .anchor(Anchor::TopLeft)
                             .snap_to_window_with_margin(px(4.))
                             .child(sub),
                     )
@@ -1027,7 +1027,7 @@ pub(crate) fn leaf_row(
                 .text_color(rgb(text))
                 .child(mark.to_string()),
         )
-        .child(div().flex_grow().child(label));
+        .child(div().flex_grow_1().child(label));
 
     if enabled {
         row = row
@@ -1085,7 +1085,7 @@ fn color_row(
                 .border_1()
                 .border_color(rgb(theme.border)),
         )
-        .child(div().flex_grow().child(label));
+        .child(div().flex_grow_1().child(label));
 
     row = row
         .cursor(CursorStyle::PointingHand)
@@ -1118,7 +1118,7 @@ fn submenu_row(
         .px(rems(8. / 16.))
         .text_color(rgb(row_text))
         .child(div().w(rems(14. / 16.)))
-        .child(div().flex_grow().child(label))
+        .child(div().flex_grow_1().child(label))
         .child(div().pl(rems(8. / 16.)).child("▶"));
 
     if is_open {

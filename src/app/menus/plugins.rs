@@ -25,14 +25,14 @@ pub(crate) fn build(_state: &MenuState) -> Menu {
         // gpui's Menu API doesn't ship a "disabled item" primitive, so the
         // empty state surfaces as a no-op submenu. The label still tells
         // the user where to look.
-        items.push(MenuItem::submenu(Menu {
+        items.push(MenuItem::submenu(Menu { disabled: false,
             name: "No plugins installed".into(),
             items: vec![MenuItem::action(
                 "Drop a .dylib / .so / .dll in the plugins folder",
                 PluginsOpenFolder,
             )],
         }));
-        return Menu {
+        return Menu { disabled: false,
             name: "&Plugins".into(),
             items,
         };
@@ -50,13 +50,13 @@ pub(crate) fn build(_state: &MenuState) -> Menu {
                 },
             ));
         }
-        items.push(MenuItem::submenu(Menu {
+        items.push(MenuItem::submenu(Menu { disabled: false,
             name: mnemonic::escape(&entry.name).into(),
             items: sub_items,
         }));
     }
 
-    Menu {
+    Menu { disabled: false,
         name: "&Plugins".into(),
         items,
     }

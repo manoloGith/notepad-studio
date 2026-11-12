@@ -245,7 +245,7 @@ pub(crate) fn take_ready_open_paths(cx: &mut App) -> Vec<PathBuf> {
 pub(crate) fn start_activation_poller(cx: &mut App) {
     cx.spawn(async move |cx| {
         loop {
-            gpui::Timer::after(Duration::from_millis(250)).await;
+            cx.background_executor().timer(Duration::from_millis(250)).await;
 
             // 1. Drain the in-process pending-open queue. Covers cold-start
             //    argv (Linux/Windows) and macOS `on_open_urls` events.

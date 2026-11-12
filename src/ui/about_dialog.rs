@@ -84,7 +84,7 @@ pub(crate) fn about_dialog(
 
 fn panel_body(theme: &Theme) -> impl IntoElement {
     div()
-        .flex_grow()
+        .flex_grow_1()
         .flex()
         .flex_col()
         .px(px(28.))

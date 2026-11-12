@@ -6,7 +6,7 @@ use crate::actions::*;
 use super::MenuState;
 
 pub(crate) fn build(_state: &MenuState) -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "&Search".into(),
         items: vec![
             MenuItem::action("Find…", EditFind),

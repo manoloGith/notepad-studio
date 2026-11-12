@@ -1,5 +1,5 @@
 use gpui::{
-    Corner, CursorStyle, Entity, IntoElement, MouseButton, Pixels, Point, anchored, deferred, div,
+    Anchor, CursorStyle, Entity, IntoElement, MouseButton, Pixels, Point, anchored, deferred, div,
     prelude::*, rems, rgb,
 };
 
@@ -173,7 +173,7 @@ pub(crate) fn context_menu(
                 .child(
                     anchored()
                         .position(position)
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(gpui::px(4.))
                         .child(menu),
                 ),

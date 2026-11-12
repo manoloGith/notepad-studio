@@ -224,7 +224,7 @@ impl Workspace {
         self.post_edit_generation = self.post_edit_generation.wrapping_add(1);
         let generation = self.post_edit_generation;
         cx.spawn(async move |this, cx| {
-            gpui::Timer::after(DEBOUNCE).await;
+            cx.background_executor().timer(DEBOUNCE).await;
             let _ = this.update(cx, |workspace, cx| {
                 if workspace.post_edit_generation == generation {
                     workspace.save_session_eager(cx);

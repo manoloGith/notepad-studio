@@ -714,7 +714,7 @@ impl Render for Workspace {
                 } else {
                     editor_pane(&theme, total_lines, cx.entity().clone()).into_any_element()
                 };
-                let mut row = div().flex().flex_row().flex_grow().min_h(rems(0.));
+                let mut row = div().flex().flex_row().flex_grow_1().min_h(rems(0.));
                 if prefs.folder_panel_visible {
                     let selected = self.folder_panel.selected.clone();
                     let inline_create = self
@@ -750,7 +750,7 @@ impl Render for Workspace {
                 }
                 row.child(
                     div()
-                        .flex_grow()
+                        .flex_grow_1()
                         .min_w(rems(0.))
                         .min_h(rems(0.))
                         .flex()

@@ -19,7 +19,7 @@ pub(super) fn build_with_recent(snap: &settings::Settings, paths: &[std::path::P
         MenuItem::separator(),
         MenuItem::action("New", FileNew),
         MenuItem::action("Open…", FileOpen),
-        MenuItem::submenu(Menu {
+        MenuItem::submenu(Menu { disabled: false,
             name: "Open Containing &Folder".into(),
             items: vec![
                 MenuItem::action(file_manager_label(), FileOpenContainingFolder),
@@ -70,7 +70,7 @@ pub(super) fn build_with_recent(snap: &settings::Settings, paths: &[std::path::P
         MenuItem::separator(),
         MenuItem::action("Close Tab", FileCloseTab),
         MenuItem::action("Close All Tabs", FileCloseAllTabs),
-        MenuItem::submenu(Menu {
+        MenuItem::submenu(Menu { disabled: false,
             name: "Close &Multiple Documents".into(),
             items: vec![
                 MenuItem::action("Close All but Active Document", FileCloseAllButActive),
@@ -85,7 +85,7 @@ pub(super) fn build_with_recent(snap: &settings::Settings, paths: &[std::path::P
         MenuItem::action("Exit", Quit),
     ]);
 
-    Menu {
+    Menu { disabled: false,
         name: "&File".into(),
         items,
     }
@@ -114,7 +114,7 @@ fn build_open_recent_submenu(full_path: bool, paths: &[std::path::PathBuf]) -> M
         items.push(MenuItem::separator());
         items.push(MenuItem::action("Clear List", FileClearRecent));
     }
-    Menu {
+    Menu { disabled: false,
         name: "Open Recent".into(),
         items,
     }

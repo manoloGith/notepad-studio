@@ -23,7 +23,7 @@ mod line_sort_tests;
 mod legacy_line_tests;
 
 pub(crate) fn build(_state: &MenuState) -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "&Edit".into(),
         items: vec![
             MenuItem::action("Undo", EditUndo),
@@ -52,7 +52,7 @@ pub(crate) fn build(_state: &MenuState) -> Menu {
             MenuItem::action("Text Tools…", EditOpenTextTools),
             MenuItem::action("Clipboard History…", EditOpenClipboardHistory),
             MenuItem::action("Character Panel…", EditOpenCharacterPanel),
-            MenuItem::submenu(gpui::Menu {
+            MenuItem::submenu(gpui::Menu { disabled: false,
                 name: "Spelling and Grammar".into(),
                 items: vec![
                     MenuItem::action("Check Spelling", EditToggleSpelling)
@@ -69,7 +69,7 @@ pub(crate) fn build(_state: &MenuState) -> Menu {
 }
 
 fn insert_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Insert".into(),
         items: vec![
             MenuItem::action("Date Time (short)", EditInsertDateTimeShort),
@@ -80,7 +80,7 @@ fn insert_menu() -> Menu {
 }
 
 fn copy_to_clipboard_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Copy to Clipboard".into(),
         items: vec![
             MenuItem::action("Current Full File path to Clipboard", EditCopyFullPath),
@@ -95,7 +95,7 @@ fn copy_to_clipboard_menu() -> Menu {
 }
 
 fn indent_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Indent".into(),
         items: vec![
             MenuItem::action("Increase Line Indent", EditIncreaseLineIndent),
@@ -105,7 +105,7 @@ fn indent_menu() -> Menu {
 }
 
 fn convert_case_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Convert Case to".into(),
         items: vec![
             MenuItem::action("UPPERCASE", EditUppercase),
@@ -123,7 +123,7 @@ fn convert_case_menu() -> Menu {
 }
 
 fn line_operations_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Line Operations".into(),
         items: vec![
             MenuItem::action("Duplicate Current Line", EditDuplicateCurrentLine),
@@ -166,7 +166,7 @@ fn line_operations_menu() -> Menu {
 }
 
 fn comment_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Comment/Uncomment".into(),
         items: vec![
             MenuItem::action("Toggle Block Comment", EditBlockComment),
@@ -180,7 +180,7 @@ fn comment_menu() -> Menu {
 }
 
 fn autocompletion_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Auto-Completion".into(),
         items: vec![
             MenuItem::action("Function Completion", EditAutocompleteFunc),
@@ -195,7 +195,7 @@ fn autocompletion_menu() -> Menu {
 }
 
 fn eol_conversion_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "EOL Conversion".into(),
         items: vec![
             MenuItem::action("Windows (CR LF)", EditEolWindows),
@@ -206,7 +206,7 @@ fn eol_conversion_menu() -> Menu {
 }
 
 fn blank_operations_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Blank Operations".into(),
         items: vec![
             MenuItem::action("Trim Trailing Space", EditTrimTrailingWs),
@@ -232,7 +232,7 @@ fn blank_operations_menu() -> Menu {
 }
 
 fn on_selection_menu() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "On Selection".into(),
         items: vec![
             MenuItem::action("Open File", EditOpenSelectedFile),

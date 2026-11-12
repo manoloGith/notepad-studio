@@ -26,7 +26,7 @@ fn build_with_saved(saved: &[crate::run_command::SavedRunCommand]) -> Menu {
             ));
         }
     }
-    Menu {
+    Menu { disabled: false,
         name: "&Run".into(),
         items,
     }

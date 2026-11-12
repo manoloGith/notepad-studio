@@ -8,7 +8,7 @@ use crate::actions::*;
 use crate::consts::APP_NAME;
 
 pub(crate) fn build() -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: APP_NAME.into(),
         items: vec![
             MenuItem::action(format!("About {APP_NAME}"), HelpAbout),

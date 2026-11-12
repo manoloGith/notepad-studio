@@ -199,7 +199,7 @@ fn status_row(
         .border_color(rgb(theme.border))
         .text_size(px(11.))
         .text_color(rgb(color))
-        .child(div().flex_grow().child(text))
+        .child(div().flex_grow_1().child(text))
         .child(
             div()
                 .id("fif-panel-close")

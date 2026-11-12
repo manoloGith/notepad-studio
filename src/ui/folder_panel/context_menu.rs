@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use gpui::{
-    Corner, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point, Styled, anchored,
+    Anchor, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point, Styled, anchored,
     deferred, div, prelude::*, px, rems,
 };
 
@@ -67,7 +67,7 @@ pub(crate) fn folder_context_menu(
                 .child(
                     anchored()
                         .position(state.position)
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(px(4.))
                         .child(panel),
                 ),

@@ -187,7 +187,7 @@ pub(crate) fn csv_status_bar(theme: &Theme, snap: &CsvGridSnapshot) -> impl Into
         .border_color(rgb(border))
         .text_size(rems(11.5 / 16.))
         .text_color(rgb(text))
-        .child(div().flex_grow().child(SharedString::from(text_value)));
+        .child(div().flex_grow_1().child(SharedString::from(text_value)));
     if !agg_text.is_empty() {
         bar = bar.child(
             div()

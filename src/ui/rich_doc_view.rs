@@ -1138,7 +1138,7 @@ impl gpui::Element for EditableInline {
                     if dy != px(0.) {
                         let max = scroll_for_move.max_offset();
                         let mut off = scroll_for_move.offset();
-                        let new_y = (off.y + dy).min(px(0.)).max(-max.height);
+                        let new_y = (off.y + dy).min(px(0.)).max(-max.y);
                         if new_y != off.y {
                             off.y = new_y;
                             scroll_for_move.set_offset(off);
@@ -1392,8 +1392,8 @@ impl Element for RichDocScrollbar {
         _window: &mut Window,
         _cx: &mut App,
     ) -> Self::PrepaintState {
-        let max_off: Size<Pixels> = self.handle.max_offset();
-        let max_y = max_off.height;
+        let max_off: gpui::Point<Pixels> = self.handle.max_offset();
+        let max_y = max_off.y;
         if max_y <= px(0.) {
             // Content fits — full-height thumb that can't move (mouse
             // handlers short-circuit on `max_y <= 0`).

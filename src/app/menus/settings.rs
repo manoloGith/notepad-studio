@@ -8,7 +8,7 @@ use crate::actions::*;
 use super::MenuState;
 
 pub(crate) fn build(_state: &MenuState) -> Menu {
-    Menu {
+    Menu { disabled: false,
         name: "Se&ttings".into(),
         items: vec![
             MenuItem::action("Preferences\u{200B}…", OpenPreferences),

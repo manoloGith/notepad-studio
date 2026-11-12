@@ -1748,7 +1748,7 @@ impl Workspace {
         }
         let max = self.rich_doc_scroll_handle.max_offset();
         let mut off = self.rich_doc_scroll_handle.offset();
-        let new_y = (off.y + dy).min(px(0.)).max(-max.height);
+        let new_y = (off.y + dy).min(px(0.)).max(-max.y);
         let delta = new_y - off.y;
         if delta != px(0.) {
             off.y = new_y;
@@ -1790,7 +1790,7 @@ impl Workspace {
         }
         let task = cx.spawn(async move |this, cx| {
             loop {
-                gpui::Timer::after(Duration::from_millis(30)).await;
+                cx.background_executor().timer(Duration::from_millis(30)).await;
                 let keep_going = this
                     .update(cx, |w, cx| {
                         // `drag_active` lives on the rich-doc payload, not on

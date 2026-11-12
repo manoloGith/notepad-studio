@@ -1,22 +1,10 @@
 [workspace]
 resolver = "2"
-exclude = ["vendor/xim"]
+# vendor/gpui is its own workspace (Zed's GPUI crates with Zed's workspace keys).
+exclude = ["vendor/xim", "vendor/gpui"]
 members = [
-    ".",
     "crates/notepad-studio-plugin",
     "crates/sample-uppercase-plugin",
-    # Vendored gpui + its Apache-2.0 support crates (self-contained, no external dep).
-    "vendor/gpui/crates/collections",
-    "vendor/gpui/crates/gpui",
-    "vendor/gpui/crates/gpui_macros",
-    "vendor/gpui/crates/http_client",
-    "vendor/gpui/crates/media",
-    "vendor/gpui/crates/refineable",
-    "vendor/gpui/crates/refineable/derive_refineable",
-    "vendor/gpui/crates/sum_tree",
-    "vendor/gpui/crates/util",
-    "vendor/gpui/crates/util_macros",
-    "vendor/gpui/tooling/perf",
 ]
 
 [workspace.package]
@@ -61,7 +49,7 @@ icon = ["assets/icon.icns"]
 category = "public.app-category.developer-tools"
 short_description = "Lightweight cross-platform text editor inspired by Notepad++."
 
-# gpui is vendored in-repo (vendor/gpui) so the project is fully self-contained —
+# gpui is vendored in-repo (vendor/gpui, its own workspace) so the project is self-contained —
 # no external checkout required. See vendor/gpui/ + NOTICE.
 [dependencies]
 futures = { workspace = true }
@@ -70,6 +58,8 @@ sha2 = { workspace = true }
 md-5 = "=0.10.6"
 sha1 = "=0.10.6"
 gpui = { path = "vendor/gpui/crates/gpui" }
+# The platform backends moved out of `gpui` (Linux, macOS, Windows; Android later).
+gpui_platform = { path = "vendor/gpui/crates/gpui_platform", features = ["x11", "wayland", "font-kit"] }
 ropey = { version = "1.6", default-features = false, features = ["cr_lines", "simd"] }
 harper-core = { version = "=0.33.0", default-features = false, features = ["concurrent"] }
 rfd = { version = "0.14", features = ["common-controls-v6"] }
@@ -180,25 +170,20 @@ bytes = "1.0"
 circular-buffer = "1.0"
 cocoa = "=0.26.0"
 cocoa-foundation = "=0.2.0"
-collections = { path = "vendor/gpui/crates/collections", version = "0.1.0" }
 core-foundation = "=0.10.0"
 core-foundation-sys = "0.8.6"
 core-video = { version = "0.4.3", features = ["metal"] }
 ctor = "0.4.0"
 derive_more = "0.99.17"
-derive_refineable = { path = "vendor/gpui/crates/refineable/derive_refineable" }
 dirs = "4.0"
 env_logger = "0.11"
 futures = "0.3"
 futures-lite = "1.13"
 git2 = { version = "0.20.1", default-features = false }
 globset = "0.4"
-gpui = { path = "vendor/gpui/crates/gpui", default-features = false }
-gpui_macros = { path = "vendor/gpui/crates/gpui_macros" }
 heck = "0.5"
 http = "1.1"
 http-body = "1.0"
-http_client = { path = "vendor/gpui/crates/http_client" }
 image = "0.25.1"
 indexmap = { version = "2.7.0", features = ["serde"] }
 indoc = "2"
@@ -207,13 +192,11 @@ itertools = "0.14.0"
 libc = "0.2"
 log = { version = "0.4.16", features = ["kv_unstable_serde", "serde"] }
 mach2 = "0.5"
-media = { path = "vendor/gpui/crates/media" }
 metal = "0.29"
 naga = { version = "25.0", features = ["wgsl-in"] }
 nix = "0.29"
 objc = "0.2"
 parking_lot = "0.12.1"
-perf = { path = "vendor/gpui/tooling/perf" }
 postage = { version = "0.5", features = ["futures-traits"] }
 pretty_assertions = { version = "1.3.0", features = ["unstable"] }
 proc-macro2 = "1.0.93"
@@ -221,7 +204,6 @@ profiling = "1"
 quote = "1.0.9"
 rand = "0.9"
 rayon = "1.8"
-refineable = { path = "vendor/gpui/crates/refineable" }
 regex = "1.5"
 # reqwest_client removed — gpui dev-dep only (tests not built as a path dep), not vendored.
 rust-embed = { version = "8.4", features = ["include-exclude"] }
@@ -243,7 +225,6 @@ smallvec = { version = "1.6", features = ["union", "const_new"] }
 smol = "2.0"
 stacksafe = "0.1"
 strum = { version = "0.27.2", features = ["derive"] }
-sum_tree = { path = "vendor/gpui/crates/sum_tree" }
 syn = { version = "2.0.101", features = ["full", "extra-traits", "visit-mut"] }
 take-until = "0.2.0"
 tempfile = "3.20.0"
@@ -252,8 +233,6 @@ tracing = "0.1.40"
 unicase = "2.6"
 unicode-segmentation = "1.10"
 url = "2.2"
-util = { path = "vendor/gpui/crates/util" }
-util_macros = { path = "vendor/gpui/crates/util_macros" }
 uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 walkdir = "2.5"
 which = "6.0.0"
@@ -311,8 +290,16 @@ features = [
 ]
 
 [patch.crates-io]
-# calloop: zed fork (pulled in by the wayland feature; linux-only at build time).
-calloop = { git = "https://github.com/zed-industries/calloop", rev = "eb6b4fd17b9af5ecc226546bdd04185391b3e265" }
+# The patches of Zed's workspace that the vendored GPUI crates need (`[patch]` only
+# applies from the root of the build; keep in step with vendor/gpui).
+async-process = { git = "https://github.com/zed-industries/async-process.git", rev = "0b6d6713570af61806e1e5cb40e0f757cb93fd9d" }
+async-task = { git = "https://github.com/zed-industries/async-task.git", rev = "015845a19fc31752c02367567d3b8900a406f9da" }
+calloop = { git = "https://github.com/zed-industries/calloop", rev = "3759371fee14c40066d64777e2a36b6ffcc22590" }
+notify = { git = "https://github.com/zed-industries/notify", rev = "d842f16b2716bd60f09caf3ae3a894237ab38f54" }
+notify-types = { git = "https://github.com/zed-industries/notify", rev = "d842f16b2716bd60f09caf3ae3a894237ab38f54" }
+# Avoid panicking when a failed EGL call reports EGL_SUCCESS.
+# https://github.com/timothee-haudebourg/khronos-egl/pull/37
+khronos-egl = { git = "https://github.com/zed-industries/khronos-egl", rev = "42214b36347b108fd9630ca6254b96dde59e04fe" }
 
 [patch."https://github.com/zed-industries/xim-rs.git"]
 zed-xim = { path = "vendor/xim" }

@@ -54,13 +54,13 @@ impl Render for ToolbarTooltip {
             .border_1()
             .border_color(rgb(self.border))
             .shadow(vec![
-                BoxShadow {
+                BoxShadow { inset: false,
                     color: hsla(0., 0., 0., 0.12),
                     offset: point(px(0.), px(2.)),
                     blur_radius: px(3.),
                     spread_radius: px(0.),
                 },
-                BoxShadow {
+                BoxShadow { inset: false,
                     color: hsla(0., 0., 0., 0.06),
                     offset: point(px(1.), px(1.)),
                     blur_radius: px(0.),

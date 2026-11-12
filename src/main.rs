@@ -8,7 +8,7 @@
 // non-Windows targets.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use gpui::{App, Application, QuitMode};
+use gpui::{App, QuitMode};
 
 mod actions;
 mod api_registry;
@@ -88,7 +88,7 @@ fn main() {
     // `application:openURLs:` delegate instead — see `app.on_open_urls`
     // below.
     single_instance::queue_argv_files();
-    let app = Application::new().with_assets(crate::assets::NotepadStudioAssets);
+    let app = gpui_platform::application().with_assets(crate::assets::NotepadStudioAssets);
 
     // macOS: Finder's `Open With → Notepad Studio`, drop-on-dock-icon, and
     // double-click on an associated file all route through the
@@ -135,7 +135,7 @@ fn main() {
         // Each window close prunes the in-memory cache to the still-open
         // set and rewrites the placement file, so the layout on disk
         // tracks exactly what the user has on screen.
-        cx.on_window_closed(|cx| {
+        cx.on_window_closed(|cx, _| {
             let alive: Vec<_> = cx.windows().into_iter().map(|h| h.window_id()).collect();
             if !app::startup::protects_placement(cx) { flush_window_settings_for_alive(&alive); }
             // Also force a session snapshot on every window close — the

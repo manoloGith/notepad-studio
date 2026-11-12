@@ -9,7 +9,7 @@ use super::MenuState;
 
 pub(crate) fn build(state: &MenuState) -> Menu {
     let selected = |language| state.has_document && state.language == language;
-    Menu {
+    Menu { disabled: false,
         name: "&Language".into(),
         items: vec![
             MenuItem::action("None (Normal Text)", LanguageNormalText).checked(selected(None)),

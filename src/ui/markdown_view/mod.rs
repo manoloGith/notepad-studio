@@ -3741,7 +3741,7 @@ impl gpui::Element for CaretOverlay {
                     let caret_top = origin.y;
                     let caret_bottom = origin.y + line_height;
                     let mut offset = w.md_preview_scroll_handle.offset();
-                    let max_y = w.md_preview_scroll_handle.max_offset().height;
+                    let max_y = w.md_preview_scroll_handle.max_offset().y;
                     let mut changed = false;
                     if caret_top < viewport_top + margin {
                         // Caret above viewport — scroll content down by

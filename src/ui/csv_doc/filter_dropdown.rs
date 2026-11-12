@@ -24,7 +24,7 @@
 use std::collections::HashSet;
 
 use gpui::{
-    Corner, CursorStyle, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point,
+    Anchor, CursorStyle, Entity, IntoElement, MouseButton, ParentElement, Pixels, Point,
     SharedString, Styled, anchored, deferred, div, prelude::*, px, rems, rgb,
 };
 
@@ -325,7 +325,7 @@ pub(crate) fn csv_filter_dropdown(
                 .child(
                     anchored()
                         .position(snap.anchor)
-                        .anchor(Corner::TopLeft)
+                        .anchor(Anchor::TopLeft)
                         .snap_to_window_with_margin(px(4.))
                         .child(panel),
                 ),
