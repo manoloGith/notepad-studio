@@ -1053,7 +1053,8 @@ impl AndroidPlatform {
     /// Should be called from the native-activity main loop on every iteration
     /// to process delayed background tasks.
     pub fn tick(&self) {
-        self.state.lock().dispatcher.tick();
+        let dispatcher = self.state.lock().dispatcher.clone();
+        dispatcher.tick();
     }
 
     /// When the next delayed background task is due; the main loop sleeps
@@ -1066,7 +1067,11 @@ impl AndroidPlatform {
     ///
     /// Useful in headless tests where there is no real ALooper.
     pub fn flush_main_thread_tasks(&self) {
-        self.state.lock().dispatcher.flush_main_thread_tasks();
+        // The tasks are GPUI's foreground work and call back into this platform
+        // (`open_window`, `displays`, …), which locks `state`: it must not be held
+        // while they run.
+        let dispatcher = self.state.lock().dispatcher.clone();
+        dispatcher.flush_main_thread_tasks();
     }
 }
 

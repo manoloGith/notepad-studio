@@ -55,7 +55,9 @@ Android platform backend, under `vendor/gpui-mobile/`:
     Source: https://github.com/aidant/gpui-mobile, revision 4288a9a
     License: GPL-3.0-or-later OR AGPL-3.0-or-later OR Apache-2.0; used here
     under Apache-2.0 (`vendor/gpui-mobile/LICENSE-APACHE`).
-    Modifications: Cargo.toml only. GPUI and its wgpu renderer are the crates
+    Modifications: src/android/platform.rs runs the main-thread tasks without
+    holding the platform's state lock (a task that opened a window deadlocked).
+    In Cargo.toml, GPUI and its wgpu renderer are the crates
     of `vendor/gpui` (not a git dependency and a renderer snapshot), wgpu is
     the revision those crates use, the default features are `clipboard`,
     `file_selector` and `url_launcher`, and the `[patch]` and `[profile]`
