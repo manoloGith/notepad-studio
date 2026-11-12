@@ -262,6 +262,16 @@ fn target_text(rope: &Rope, range: Range<usize>) -> Option<String> {
 
 // --- Per-platform launchers ---------------------------------------------
 
+// Android: an app cannot start a file manager or a terminal on a path; these do nothing.
+#[cfg(target_os = "android")]
+fn launch_file_manager(_path: &Path) {}
+
+#[cfg(target_os = "android")]
+fn reveal_in_file_manager(_path: &Path) {}
+
+#[cfg(target_os = "android")]
+fn launch_terminal_in(_dir: &Path) {}
+
 #[cfg(target_os = "macos")]
 fn launch_file_manager(path: &Path) {
     let _ = Command::new("open").arg(path).spawn();

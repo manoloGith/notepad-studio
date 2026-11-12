@@ -1,12 +1,8 @@
 // Notepad Studio — lightweight cross-platform text editor.
 
-// On Windows, the default Rust binary uses the "console" subsystem, so Windows
-// spawns a terminal window alongside the GUI and stdout (e.g. the plugin
-// scanner's logs) prints into it. Build release binaries with the "windows"
-// (GUI) subsystem so no console appears. Debug builds keep the console so
-// `println!`/`eprintln!` diagnostics stay visible during development. No-op on
-// non-Windows targets.
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// The whole app is this library, so another crate can start it: the desktop
+// binary (`src/main.rs`) and the Android app (DexNotas, a `cdylib` whose
+// `android_main` calls [`main`]).
 
 use gpui::{App, QuitMode};
 
@@ -67,7 +63,8 @@ use crate::app::window::{raise_all_app_windows, restore_windows_on_boot};
 use crate::config::flush_window_settings_for_alive;
 use crate::panic_log::install_panic_hook;
 
-fn main() {
+/// Starts Notepad Studio and returns when the app quits.
+pub fn main() {
     install_panic_hook();
     // Single-instance gate. If another live Notepad Studio is already running, this
     // call queues an activation request for the running instance, then exits the

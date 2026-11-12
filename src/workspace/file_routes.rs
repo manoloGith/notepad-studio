@@ -21,6 +21,11 @@ fn launch_request(kind: ShellKind, directory: PathBuf) -> Result<Launch, String>
     let application = match kind { ShellKind::CommandPrompt => "Terminal", ShellKind::PowerShell => "PowerShell" };
     Ok(Launch { executable: "open".into(), arguments: vec!["-a".into(), application.into(), directory.as_os_str().to_owned()], directory })
 }
+// Android: an app cannot start a terminal.
+#[cfg(target_os = "android")]
+fn launch_request(_kind: ShellKind, _directory: PathBuf) -> Result<Launch, String> {
+    Err("Android has no terminal to open".to_string())
+}
 #[cfg(target_os = "linux")]
 fn launch_request(kind: ShellKind, directory: PathBuf) -> Result<Launch, String> {
     let arguments = match kind { ShellKind::CommandPrompt => Vec::new(), ShellKind::PowerShell => vec!["-e".into(), "pwsh".into()] };
@@ -239,7 +244,7 @@ impl Workspace {
 
 #[cfg(target_os = "windows")]
 pub(super) fn file_identity(path: &Path) -> Option<file_id::FileId> { file_id::get_file_id(path).ok() }
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "android"))]
 pub(super) fn file_identity(path: &Path) -> Option<(u64, u64)> {
     use std::os::unix::fs::MetadataExt;
     std::fs::metadata(path).ok().map(|metadata| (metadata.dev(), metadata.ino()))

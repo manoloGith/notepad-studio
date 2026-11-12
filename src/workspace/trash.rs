@@ -170,8 +170,11 @@ fn confirmation(path: &Path, dirty: bool, window: &Window) -> impl std::future::
 }
 
 fn delete(path: &Path) -> Result<(), String> {
-    #[cfg(not(test))]
+    #[cfg(all(not(test), not(target_os = "android")))]
     { trash::delete(path).map_err(|error| error.to_string()) }
+    // Android has no recycle bin an app can move a file to; nothing is deleted.
+    #[cfg(all(not(test), target_os = "android"))]
+    { let _ = path; Err("Android has no recycle bin".to_string()) }
     #[cfg(test)]
     { test_support::delete(path) }
 }

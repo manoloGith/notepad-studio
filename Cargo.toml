@@ -5,6 +5,9 @@ exclude = ["vendor/xim", "vendor/gpui"]
 members = [
     "crates/notepad-studio-plugin",
     "crates/sample-uppercase-plugin",
+    # The Android (and iOS) platform backend for GPUI: https://github.com/aidant/gpui-mobile
+    "vendor/gpui-mobile",
+    "android/rfd-shim",
 ]
 
 [workspace.package]
@@ -27,6 +30,10 @@ repository = "https://github.com/alesloa/notepad-studio"
 keywords = ["editor", "text-editor", "notepad", "gui"]
 categories = ["text-editors", "gui"]
 build = "build.rs"
+
+[lib]
+name = "notepad_studio"
+path = "src/lib.rs"
 
 [[bin]]
 name = "notepad-studio"
@@ -62,7 +69,8 @@ gpui = { path = "vendor/gpui/crates/gpui" }
 gpui_platform = { path = "vendor/gpui/crates/gpui_platform", features = ["x11", "wayland", "font-kit"] }
 ropey = { version = "1.6", default-features = false, features = ["cr_lines", "simd"] }
 harper-core = { version = "=0.33.0", default-features = false, features = ["concurrent"] }
-rfd = { version = "0.14", features = ["common-controls-v6"] }
+# rfd has no Android backend: this crate is rfd itself everywhere else (android/rfd-shim).
+rfd = { package = "rfd-android-shim", path = "android/rfd-shim" }
 anyhow = "1"
 dirs = "5"
 serde = { version = "1", features = ["derive", "rc"] }
@@ -73,7 +81,6 @@ walkdir = "2"
 uuid = { version = "1", features = ["v4", "serde"] }
 encoding_rs = "0.8"
 libloading = "0.8"
-trash = "5"
 renamore = "=0.3.2"
 chrono = "0.4"
 pulldown-cmark = { version = "0.13", default-features = false }
@@ -132,6 +139,10 @@ objc = "0.2"
 # Linux-only POSIX `nl_langinfo` bridge for Edit ▸ Insert ▸ Date/Time Short.
 # Pulls the user's locale short-date / short-time patterns so the inserted
 # stamp matches what the rest of the OS shows (date pickers, clocks, etc.).
+# The recycle bin: no Android backend.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+trash = "5"
+
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
 

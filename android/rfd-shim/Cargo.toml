@@ -1,0 +1,16 @@
+[package]
+name = "rfd-android-shim"
+version = "0.14.1"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "rfd for Notepad Studio: the real rfd everywhere but Android, where a backend the app installs answers (DexNotas)"
+
+[lib]
+name = "rfd"
+
+[dependencies]
+log = "0.4"
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+rfd_real = { package = "rfd", version = "0.14", features = ["common-controls-v6"] }
