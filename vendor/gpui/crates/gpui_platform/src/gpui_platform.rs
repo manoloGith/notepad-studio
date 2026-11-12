@@ -93,6 +93,16 @@ pub fn current_platform(headless: bool) -> Rc<dyn Platform> {
         let _ = headless;
         Rc::new(gpui_web::WebPlatform::new(true))
     }
+
+    // Android: the platform is created from the `AndroidApp` that `android_main`
+    // receives (`gpui_mobile::android::jni::init_platform`), before any GPUI call.
+    #[cfg(target_os = "android")]
+    {
+        let _ = headless;
+        gpui_mobile::android::jni::shared_platform()
+            .expect("call gpui_mobile::android::jni::init_platform from android_main first")
+            .into_rc()
+    }
 }
 
 /// Returns the current platform's text system for benchmark contexts, built once per

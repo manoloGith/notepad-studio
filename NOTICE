@@ -46,6 +46,26 @@ No other source modifications were made. The test-support-only accessors that
 the previous vendored copy (revision acd8f23) added to window.rs/platform.rs
 have not been carried over yet.
 
+  * crates/gpui_platform: on Android, `current_platform` returns the platform
+    of `vendor/gpui-mobile` (a target dependency Zed does not have).
+
+Android platform backend, under `vendor/gpui-mobile/`:
+    gpui-mobile (package `gpui-pre-mobile`)
+    Copyright Balamurali Pandranki and the gpui-mobile contributors
+    Source: https://github.com/aidant/gpui-mobile, revision 4288a9a
+    License: GPL-3.0-or-later OR AGPL-3.0-or-later OR Apache-2.0; used here
+    under Apache-2.0 (`vendor/gpui-mobile/LICENSE-APACHE`).
+    Modifications: Cargo.toml only. GPUI and its wgpu renderer are the crates
+    of `vendor/gpui` (not a git dependency and a renderer snapshot), wgpu is
+    the revision those crates use, the default features are `clipboard`,
+    `file_selector` and `url_launcher`, and the `[patch]` and `[profile]`
+    sections moved to the workspace root. The example app, the tests and the
+    renderer snapshot are not included.
+
+`android/rfd-shim/` is the rfd shim of craft-android
+(https://github.com/manoloGith/craft-android, MIT OR Apache-2.0), with a
+blocking `MessageDialog` added.
+
 The X11 input-method client is patched locally under `vendor/xim/`.
     zed-xim 0.4.0-zed, xim-parser 0.2.1, xim-ctext 0.3.0, xim-gen 0.1.0
     Copyright (c) 2020 Riey; Zed contributors

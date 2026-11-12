@@ -69,3 +69,7 @@ gpui_wgpu = { workspace = true, optional = true }
 [target.'cfg(target_family = "wasm")'.dependencies]
 gpui_web.workspace = true
 console_error_panic_hook.workspace = true
+
+# Not part of Zed: the Android backend (vendor/gpui-mobile in this repository).
+[target.'cfg(target_os = "android")'.dependencies]
+gpui_mobile = { package = "gpui-pre-mobile", path = "../../../gpui-mobile", default-features = false, features = ["clipboard", "file_selector", "url_launcher"] }
