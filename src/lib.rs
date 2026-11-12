@@ -70,6 +70,9 @@ pub fn main() {
     // call queues an activation request for the running instance, then exits the
     // current process with code 0. Has to land before the gpui Application
     // is built so a duplicate launch doesn't briefly flash a window.
+    // Android runs one process per app, and a lock left by a killed process could name a
+    // process id that is alive again: there is no gate there.
+    #[cfg(not(target_os = "android"))]
     if let Err(error) = single_instance::acquire_or_raise() {
         eprintln!("[startup] {error}");
         // No GPUI app or borrowed window exists yet; the native error contains
