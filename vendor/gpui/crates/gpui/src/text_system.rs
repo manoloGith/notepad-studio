@@ -377,6 +377,15 @@ impl TextSystem {
             }
         }
 
+        // Android (not part of Zed): none of the fallbacks above is a system font there, and
+        // manufacturers rename the ones there are. Any installed family is better than a panic.
+        #[cfg(target_os = "android")]
+        for family in self.platform_text_system.all_font_names() {
+            if let Ok(font_id) = self.font_id(&crate::font(family)) {
+                return font_id;
+            }
+        }
+
         panic!(
             "failed to resolve font '{}' or any of the fallbacks: {}",
             font.family,

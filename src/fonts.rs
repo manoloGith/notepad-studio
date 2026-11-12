@@ -29,7 +29,10 @@ static UI: OnceLock<SharedString> = OnceLock::new();
 const MONO_CANDIDATES: &[&str] = &["Menlo", "Monaco", "Courier New", "Courier"];
 #[cfg(target_os = "windows")]
 const MONO_CANDIDATES: &[&str] = &["Consolas", "Cascadia Mono", "Lucida Console", "Courier New"];
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+// Android: what /system/fonts has (the fixed-width face is Droid Sans Mono on most devices).
+#[cfg(target_os = "android")]
+const MONO_CANDIDATES: &[&str] = &["Droid Sans Mono", "Roboto Mono", "Cutive Mono", "Noto Sans Mono"];
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "android")))]
 const MONO_CANDIDATES: &[&str] = &[
     "DejaVu Sans Mono",
     "Liberation Mono",
@@ -46,7 +49,9 @@ const MONO_CANDIDATES: &[&str] = &[
 /// IBM Plex Sans, which few systems ship, so pick an installed desktop face.
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 const UI_CANDIDATES: &[&str] = &[".SystemUIFont"];
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(target_os = "android")]
+const UI_CANDIDATES: &[&str] = &["Roboto", "Roboto Flex", "Noto Sans", ".SystemUIFont"];
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "android")))]
 const UI_CANDIDATES: &[&str] = &[
     "Ubuntu",
     "Cantarell",
@@ -61,6 +66,15 @@ const UI_CANDIDATES: &[&str] = &[
 /// first window renders. Later calls are no-ops.
 pub(crate) fn init(cx: &App) {
     let names = cx.text_system().all_font_names();
+    // Android: manufacturers replace the system fonts, so the candidates may all be missing,
+    // and a family nothing provides cannot be drawn at all: take an installed one instead.
+    #[cfg(target_os = "android")]
+    let mono = SharedString::from(
+        MONO_CANDIDATES.iter().find_map(|c| find_family(&names, c))
+            .or_else(|| names.iter().map(String::as_str).find(|n| n.to_ascii_lowercase().contains("mono")))
+            .or_else(|| names.first().map(String::as_str))
+            .unwrap_or_else(|| fallback(MONO_CANDIDATES)).to_string());
+    #[cfg(not(target_os = "android"))]
     let mono = SharedString::from(pick(MONO_CANDIDATES, &names).to_string());
     let ui = SharedString::from(pick(UI_CANDIDATES, &names).to_string());
     let _ = INSTALLED.set(names);

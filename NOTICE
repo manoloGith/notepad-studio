@@ -46,6 +46,10 @@ No other source modifications were made. The test-support-only accessors that
 the previous vendored copy (revision acd8f23) added to window.rs/platform.rs
 have not been carried over yet.
 
+  * crates/gpui, text_system.rs: on Android, a font that neither resolves nor
+    has an installed fallback resolves to any installed family instead of
+    panicking.
+
   * crates/gpui_platform: on Android, `current_platform` returns the platform
     of `vendor/gpui-mobile` (a target dependency Zed does not have).
 
