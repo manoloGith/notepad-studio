@@ -67,7 +67,9 @@ Android platform backend, under `vendor/gpui-mobile/`:
     physical keyboard from GpuiInputActivity.dispatchKeyEvent, which resolves
     them with the keyboard's layout and does not show the IME while a
     physical keyboard is attached; window.rs reports the safe area as GPUI's
-    window insets.
+    window insets, and types the character of a key no binding took into the
+    focused input; keyboard.rs names the space key "space" and gives a key
+    it does not list the name of its character.
     In Cargo.toml, GPUI and its wgpu renderer are the crates
     of `vendor/gpui` (not a git dependency and a renderer snapshot), wgpu is
     the revision those crates use, the default features are `clipboard`,

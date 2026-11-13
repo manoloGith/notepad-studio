@@ -1937,7 +1937,13 @@ impl PlatformWindow for AndroidPlatformWindow {
         // ── Key events → PlatformInput ───────────────────────────────────
         {
             let cb = Arc::clone(&input_cb);
+            // The focused text input, to type into (below). Not Send, as the callbacks above:
+            // key events are only ever handled on the main thread.
+            struct InputHandlerSlot(Rc<RefCell<Option<PlatformInputHandler>>>);
+            unsafe impl Send for InputHandlerSlot {}
+            let input_handler = InputHandlerSlot(Rc::clone(&self.input_handler));
             self.window.on_key_event(move |key_event| {
+                let input_handler = &input_handler;
                 use crate::android::keyboard::{
                     android_key_to_keystroke, AKEY_EVENT_ACTION_DOWN, AKEY_EVENT_ACTION_UP,
                 };
@@ -1984,8 +1990,45 @@ impl PlatformWindow for AndroidPlatformWindow {
                     return; // ACTION_MULTIPLE or unknown
                 };
 
-                let mut guard = cb.lock();
-                let _ = guard(event);
+                // A key that no binding took and that makes a character types it, as on
+                // GPUI's desktop platforms (upstream gpui-mobile leaves typing to the IME).
+                // Ctrl and Meta make shortcuts; Alt does too unless it is AltGr (right Alt).
+                const META_ALT_RIGHT_ON: i32 = 0x20;
+                let typed = match &event {
+                    gpui::PlatformInput::KeyDown(key_down) => {
+                        let modifiers = &key_down.keystroke.modifiers;
+                        let alt_gr = key_event.meta_state & META_ALT_RIGHT_ON != 0;
+                        // Enter, Tab and the like are keys for bindings, not text.
+                        let printable = char::from_u32(key_event.unicode_char)
+                            .is_some_and(|c| !c.is_control());
+                        if printable
+                            && !modifiers.control
+                            && !modifiers.platform
+                            && !modifiers.function
+                            && (!modifiers.alt || alt_gr)
+                        {
+                            key_down.keystroke.key_char.clone()
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                };
+
+                let result = {
+                    let mut guard = cb.lock();
+                    guard(event)
+                };
+                if let Some(text) = typed.filter(|_| result.propagate) {
+                    let handler = input_handler.0.borrow_mut().take();
+                    if let Some(mut handler) = handler {
+                        handler.replace_text_in_range(None, &text);
+                        let mut slot = input_handler.0.borrow_mut();
+                        if slot.is_none() {
+                            *slot = Some(handler);
+                        }
+                    }
+                }
             });
         }
     }

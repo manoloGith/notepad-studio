@@ -232,7 +232,7 @@ pub fn android_keycode_to_key(key_code: i32) -> Option<String> {
         // Punctuation / symbols
         AKEYCODE_COMMA => ",",
         AKEYCODE_PERIOD => ".",
-        AKEYCODE_SPACE => " ",
+        AKEYCODE_SPACE => "space", // GPUI's name for the key (bindings say "space")
         AKEYCODE_GRAVE => "`",
         AKEYCODE_MINUS => "-",
         AKEYCODE_EQUALS => "=",
@@ -324,7 +324,13 @@ pub fn android_key_to_keystroke(
     meta_state: i32,
     unicode_char: u32,
 ) -> Option<Keystroke> {
-    let key = android_keycode_to_key(key_code)?;
+    // A key this table does not know still types its character (a physical keyboard's layout
+    // has keys Android gives no code of their own, or one that is not listed here).
+    let key = android_keycode_to_key(key_code).or_else(|| {
+        char::from_u32(unicode_char)
+            .filter(|c| !c.is_control())
+            .map(|c| c.to_lowercase().to_string())
+    })?;
     let modifiers = android_meta_to_modifiers(meta_state);
 
     // Determine the character representation.
@@ -473,7 +479,7 @@ mod tests {
         );
         assert_eq!(
             android_keycode_to_key(AKEYCODE_SPACE),
-            Some(" ".to_string())
+            Some("space".to_string())
         );
     }
 
