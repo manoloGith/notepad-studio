@@ -257,6 +257,12 @@ pub type VisibilityCallback = Box<dyn FnMut(bool) + Send + 'static>;
 /// Called when a key event arrives.
 pub type KeyCallback = Box<dyn FnMut(AndroidKeyEvent) + Send + 'static>;
 
+/// Called when a mouse event arrives (see `desktop_input`).
+pub type MouseCallback = Box<dyn FnMut(super::desktop_input::MouseInput) + Send + 'static>;
+
+/// Called when the safe area insets change.
+pub type InsetsCallback = Box<dyn FnMut() + Send + 'static>;
+
 /// Called when the window is resized.
 pub type ResizeCallback = Box<dyn FnMut(Size<DevicePixels>, f32) + Send + 'static>;
 
@@ -297,7 +303,7 @@ impl From<WindowAppearance> for gpui::WindowAppearance {
 /// These represent the areas of the screen occupied by system UI elements
 /// (status bar, navigation bar, camera notch, etc.) that the app content
 /// should avoid drawing into — or at least pad/account for.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct SafeAreaInsets {
     /// Top inset in device pixels (status bar / camera notch).
     pub top: f32,
@@ -372,6 +378,8 @@ struct WindowState {
     request_frame_callback: Option<RequestFrameCallback>,
     touch_callback: Option<TouchCallback>,
     key_callback: Option<KeyCallback>,
+    mouse_callback: Option<MouseCallback>,
+    insets_callback: Option<InsetsCallback>,
     resize_callback: Option<ResizeCallback>,
     close_callback: Option<CloseCallback>,
     appearance_callback: Option<AppearanceCallback>,
@@ -481,6 +489,8 @@ impl AndroidWindow {
             request_frame_callback: None,
             touch_callback: None,
             key_callback: None,
+            mouse_callback: None,
+            insets_callback: None,
             resize_callback: None,
             close_callback: None,
             appearance_callback: None,
@@ -517,6 +527,8 @@ impl AndroidWindow {
             request_frame_callback: None,
             touch_callback: None,
             key_callback: None,
+            mouse_callback: None,
+            insets_callback: None,
             resize_callback: None,
             close_callback: None,
             appearance_callback: None,
@@ -930,6 +942,18 @@ impl AndroidWindow {
         }
     }
 
+    /// Dispatch a mouse event to the registered callback.
+    pub fn handle_mouse(&self, event: super::desktop_input::MouseInput) {
+        let cb = self.state.lock().mouse_callback.take();
+        if let Some(mut cb) = cb {
+            cb(event);
+            let mut state = self.state.lock();
+            if state.mouse_callback.is_none() {
+                state.mouse_callback = Some(cb);
+            }
+        }
+    }
+
     // ── appearance ────────────────────────────────────────────────────────────
 
     /// Update the window's appearance (e.g. after a dark-mode change).
@@ -1105,21 +1129,36 @@ impl AndroidWindow {
         content_right: i32,
         content_bottom: i32,
     ) {
-        let mut state = self.state.lock();
-        let insets = SafeAreaInsets {
-            top: content_top as f32,
-            bottom: (state.height - content_bottom).max(0) as f32,
-            left: content_left as f32,
-            right: (state.width - content_right).max(0) as f32,
+        let cb = {
+            let mut state = self.state.lock();
+            let insets = SafeAreaInsets {
+                top: content_top as f32,
+                bottom: (state.height - content_bottom).max(0) as f32,
+                left: content_left as f32,
+                right: (state.width - content_right).max(0) as f32,
+            };
+            if state.safe_area_insets == insets {
+                return;
+            }
+            log::info!(
+                "safe_area_insets updated: top={:.0} bottom={:.0} left={:.0} right={:.0} (physical px)",
+                insets.top,
+                insets.bottom,
+                insets.left,
+                insets.right,
+            );
+            state.safe_area_insets = insets;
+            state.insets_callback.take()
         };
-        log::info!(
-            "safe_area_insets updated: top={:.0} bottom={:.0} left={:.0} right={:.0} (physical px)",
-            insets.top,
-            insets.bottom,
-            insets.left,
-            insets.right,
-        );
-        state.safe_area_insets = insets;
+        // Outside the lock: the callback has GPUI lay the window out again, which reads the
+        // insets back.
+        if let Some(mut cb) = cb {
+            cb();
+            let mut state = self.state.lock();
+            if state.insets_callback.is_none() {
+                state.insets_callback = Some(cb);
+            }
+        }
     }
 
     // ── state queries ─────────────────────────────────────────────────────────
@@ -1178,6 +1217,22 @@ impl AndroidWindow {
         F: FnMut(AndroidKeyEvent) + Send + 'static,
     {
         self.state.lock().key_callback = Some(Box::new(cb));
+    }
+
+    /// Register a callback invoked for each mouse event.
+    pub fn on_mouse<F>(&self, cb: F)
+    where
+        F: FnMut(super::desktop_input::MouseInput) + Send + 'static,
+    {
+        self.state.lock().mouse_callback = Some(Box::new(cb));
+    }
+
+    /// Register a callback invoked when the safe area insets change.
+    pub fn on_insets_changed<F>(&self, cb: F)
+    where
+        F: FnMut() + Send + 'static,
+    {
+        self.state.lock().insets_callback = Some(Box::new(cb));
     }
 
     /// Register a callback invoked when the window is resized.
@@ -1789,6 +1844,96 @@ impl PlatformWindow for AndroidPlatformWindow {
             });
         }
 
+        // ── Mouse events → PlatformInput (see `desktop_input`) ───────────
+        {
+            use super::desktop_input::{self, MouseKind};
+            let cb = Arc::clone(&input_cb);
+            let window = Arc::downgrade(&self.window);
+            let mut pressed: Option<gpui::MouseButton> = None;
+            // The last press: when, where, which button and how many clicks it made.
+            let mut last_press: Option<(std::time::Instant, gpui::Point<gpui::Pixels>, gpui::MouseButton, usize)> = None;
+            self.window.on_mouse(move |mouse| {
+                let Some(window) = window.upgrade() else {
+                    return;
+                };
+                let scale = window.scale_factor();
+                let position = gpui::point(gpui::px(mouse.x / scale), gpui::px(mouse.y / scale));
+                let modifiers = crate::android::keyboard::android_meta_to_modifiers(mouse.meta_state);
+                let button_for = |bit: u32| match bit {
+                    desktop_input::BUTTON_SECONDARY => gpui::MouseButton::Right,
+                    desktop_input::BUTTON_TERTIARY => gpui::MouseButton::Middle,
+                    desktop_input::BUTTON_BACK => gpui::MouseButton::Navigate(gpui::NavigationDirection::Back),
+                    desktop_input::BUTTON_FORWARD => gpui::MouseButton::Navigate(gpui::NavigationDirection::Forward),
+                    _ => gpui::MouseButton::Left,
+                };
+                let event = match mouse.kind {
+                    MouseKind::Move => gpui::PlatformInput::MouseMove(gpui::MouseMoveEvent {
+                        position,
+                        pressed_button: pressed,
+                        modifiers,
+                    }),
+                    MouseKind::Down(bit) => {
+                        let button = button_for(bit);
+                        let now = std::time::Instant::now();
+                        // A double click: the same button again, soon and close enough.
+                        let click_count = match last_press {
+                            Some((at, place, last_button, count))
+                                if last_button == button
+                                    && now.duration_since(at) < std::time::Duration::from_millis(500)
+                                    && (position.x - place.x).abs() < gpui::px(5.)
+                                    && (position.y - place.y).abs() < gpui::px(5.) =>
+                            {
+                                count + 1
+                            }
+                            _ => 1,
+                        };
+                        last_press = Some((now, position, button, click_count));
+                        pressed = Some(button);
+                        gpui::PlatformInput::MouseDown(gpui::MouseDownEvent {
+                            button,
+                            position,
+                            modifiers,
+                            click_count,
+                            first_mouse: false,
+                        })
+                    }
+                    MouseKind::Up(bit) => {
+                        let button = button_for(bit);
+                        if pressed == Some(button) {
+                            pressed = None;
+                        }
+                        let click_count = match last_press {
+                            Some((_, _, last_button, count)) if last_button == button => count,
+                            _ => 1,
+                        };
+                        gpui::PlatformInput::MouseUp(gpui::MouseUpEvent {
+                            button,
+                            position,
+                            modifiers,
+                            click_count,
+                        })
+                    }
+                    // Android: a positive vertical step is the wheel turned away from the
+                    // user (the view moves up), and a positive horizontal one is to the
+                    // right; GPUI adds the delta to the scroll offset.
+                    MouseKind::Scroll { horizontal, vertical } => gpui::PlatformInput::Scroll(gpui::ScrollEvent {
+                        position,
+                        delta: gpui::ScrollDelta::Lines(gpui::point(-horizontal, vertical)),
+                        modifiers,
+                        touch_phase: gpui::TouchPhase::Moved,
+                        ..Default::default()
+                    }),
+                    MouseKind::Exit => gpui::PlatformInput::MouseExited(gpui::MouseExitEvent {
+                        position,
+                        pressed_button: pressed,
+                        modifiers,
+                    }),
+                };
+                let mut cb = cb.lock();
+                let _ = cb(event);
+            });
+        }
+
         // ── Key events → PlatformInput ───────────────────────────────────
         {
             let cb = Arc::clone(&input_cb);
@@ -1920,6 +2065,44 @@ impl PlatformWindow for AndroidPlatformWindow {
         let send_callback: Box<dyn FnOnce() + Send + 'static> =
             unsafe { std::mem::transmute::<Box<dyn FnOnce()>, Box<dyn FnOnce() + Send>>(callback) };
         self.window.on_close(send_callback);
+    }
+
+    // The part of the window under system UI: the status bar, the display cutout and, in DeX
+    // and desktop windowing, the caption bar drawn over the top of the window.
+    fn insets(&self) -> gpui::WindowInsets {
+        let insets = self.window.safe_area_insets_logical();
+        gpui::WindowInsets {
+            safe_area: gpui::Edges {
+                top: gpui::px(insets.top),
+                right: gpui::px(insets.right),
+                bottom: gpui::px(insets.bottom),
+                left: gpui::px(insets.left),
+            },
+            ..Default::default()
+        }
+    }
+
+    fn on_insets_changed(&self, callback: Box<dyn FnMut(gpui::WindowInsets)>) {
+        // As the other callbacks: not Send, but only ever invoked on the main thread.
+        let send_callback: Box<dyn FnMut(gpui::WindowInsets) + Send> = unsafe { std::mem::transmute(callback) };
+        let send_callback = Mutex::new(send_callback);
+        let window = Arc::downgrade(&self.window);
+        self.window.on_insets_changed(move || {
+            let Some(window) = window.upgrade() else {
+                return;
+            };
+            let insets = window.safe_area_insets_logical();
+            let mut cb = send_callback.lock();
+            cb(gpui::WindowInsets {
+                safe_area: gpui::Edges {
+                    top: gpui::px(insets.top),
+                    right: gpui::px(insets.right),
+                    bottom: gpui::px(insets.bottom),
+                    left: gpui::px(insets.left),
+                },
+                ..Default::default()
+            });
+        });
     }
 
     fn on_appearance_changed(&self, callback: Box<dyn FnMut()>) {

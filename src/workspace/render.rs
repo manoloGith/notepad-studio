@@ -183,6 +183,7 @@ impl Render for Workspace {
             cancel: p.cancel.clone(),
         }).or_else(|| self.reload_chip()).or_else(|| self.file_move_chip()).or_else(|| self.file_copy_chip()).or_else(|| self.automatic_title_chip());
 
+        let insets = window.insets().effective();
         div()
             .key_context("Workspace")
             .track_focus(&self.focus_handle(cx))
@@ -549,6 +550,13 @@ impl Render for Workspace {
             .flex()
             .flex_col()
             .size_full()
+            // The part of the window under system UI (zero on a desktop): on Android the status
+            // and navigation bars and, in DeX and desktop windowing, the caption bar that is
+            // drawn over the top of the window.
+            .pt(insets.top)
+            .pr(insets.right)
+            .pb(insets.bottom)
+            .pl(insets.left)
             .bg(rgb(theme.bg))
             .text_color(rgb(theme.text))
             .font_family(crate::fonts::mono())

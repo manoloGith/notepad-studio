@@ -639,6 +639,55 @@ fn process_input_events(app: &AndroidApp) {
                                 pointer_count,
                             );
 
+                            // A mouse (DeX, desktop windowing) is not a finger: it hovers,
+                            // has buttons and a wheel. See `desktop_input`.
+                            {
+                                use android_activity::input::{Axis, Source, ToolType};
+                                use super::desktop_input::{self, MouseAction};
+                                let pointer = motion_event.pointer_at_index(0);
+                                let is_mouse = matches!(motion_event.source(), Source::Mouse)
+                                    || matches!(pointer.tool_type(), ToolType::Mouse);
+                                if is_mouse {
+                                    let mouse_action = match action {
+                                        MotionAction::Down => Some(MouseAction::Down),
+                                        MotionAction::Up => Some(MouseAction::Up),
+                                        MotionAction::Move
+                                        | MotionAction::HoverMove
+                                        | MotionAction::HoverEnter => Some(MouseAction::Move),
+                                        MotionAction::ButtonPress | MotionAction::ButtonRelease => {
+                                            Some(MouseAction::Button)
+                                        }
+                                        MotionAction::Scroll => Some(MouseAction::Scroll {
+                                            horizontal: pointer.axis_value(Axis::Hscroll),
+                                            vertical: pointer.axis_value(Axis::Vscroll),
+                                        }),
+                                        MotionAction::HoverExit => Some(MouseAction::Exit),
+                                        MotionAction::Cancel => Some(MouseAction::Cancel),
+                                        _ => None,
+                                    };
+                                    let buttons = motion_event.button_state().0;
+                                    let meta = motion_event.meta_state().0 as i32;
+                                    static LOGGED: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                                    if !matches!(action, MotionAction::Move | MotionAction::HoverMove) {
+                                        desktop_input::log_first(&LOGGED, 40, || {
+                                            format!("mouse: {action:?} buttons={buttons:#x} meta={meta:#x}")
+                                        });
+                                    }
+                                    if let Some(mouse_action) = mouse_action {
+                                        for input in desktop_input::mouse_inputs(
+                                            mouse_action,
+                                            pointer.x(),
+                                            pointer.y(),
+                                            buttons,
+                                            meta,
+                                        ) {
+                                            win.handle_mouse(input);
+                                        }
+                                    }
+                                    return android_activity::InputStatus::Handled;
+                                }
+                            }
+
                             // GPUI does not use hover on mobile. With a screen reader on,
                             // touch exploration arrives as hover events, which the
                             // accessibility delegate on the decor view has to see.
@@ -746,6 +795,24 @@ fn process_input_events(app: &AndroidApp) {
                             let key_code: u32 = key_event.key_code().into();
                             let meta_state: u32 = key_event.meta_state().0;
 
+                            // A physical keyboard: leave the key to the activity
+                            // (`GpuiInputActivity.dispatchKeyEvent`), which knows the
+                            // keyboard's layout and queues it back (`desktop_input`). Here
+                            // only the key code is known, and the character would come
+                            // from the virtual keyboard's layout. Back stays here.
+                            if key_event.device_id() > 0
+                                && matches!(key_event.source(), android_activity::input::Source::Keyboard)
+                                && key_code != 4
+                            {
+                                return android_activity::InputStatus::Unhandled;
+                            }
+                            {
+                                static LOGGED: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                                super::desktop_input::log_first(&LOGGED, 20, || {
+                                    format!("key from the input queue: code={key_code} action={action} meta={meta_state:#x}")
+                                });
+                            }
+
                             let unicode_char = unicode_char_for_key_event(
                                 key_code as i32,
                                 action,
@@ -784,6 +851,12 @@ fn process_input_events(app: &AndroidApp) {
         Err(err) => {
             log::error!("Failed to get input events iterator: {err:?}");
         }
+    }
+
+    // The keys of a physical keyboard, which the activity resolved and queued
+    // (`GpuiInputActivity.dispatchKeyEvent`, see `desktop_input`).
+    for key_event in super::desktop_input::take_keys() {
+        win.handle_key_event(key_event);
     }
 }
 
@@ -1616,6 +1689,36 @@ pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiInputActivity_nativeIme(
             end: end.max(0) as usize,
         });
         Ok(())
+    });
+}
+
+/// A key of a physical keyboard, from `GpuiInputActivity.dispatchKeyEvent` on the UI thread:
+/// the key code, `ACTION_DOWN` (0) or `ACTION_UP` (1), the `META_*` state, and the character the
+/// keyboard's layout gives it (0 for none; dead keys already combined).
+///
+/// # Safety
+/// Called by JNI.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiInputActivity_nativeKey(
+    _env: *mut c_void,
+    _class: *mut c_void,
+    key_code: i32,
+    action: i32,
+    meta_state: i32,
+    unicode_char: i32,
+) {
+    static LOGGED: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    super::desktop_input::log_first(&LOGGED, 40, || {
+        format!(
+            "key from the activity: code={key_code} action={action} meta={meta_state:#x} text={}",
+            unicode_char != 0
+        )
+    });
+    super::desktop_input::enqueue_key(crate::android::AndroidKeyEvent {
+        key_code,
+        action,
+        meta_state,
+        unicode_char: unicode_char.max(0) as u32,
     });
 }
 

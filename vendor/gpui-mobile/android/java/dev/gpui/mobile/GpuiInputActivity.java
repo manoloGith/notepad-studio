@@ -2,11 +2,14 @@ package dev.gpui.mobile;
 
 import android.app.NativeActivity;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.TextWatcher;
+import android.view.InputDevice;
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.inputmethod.BaseInputConnection;
@@ -32,8 +35,84 @@ public class GpuiInputActivity extends NativeActivity {
         super.onCreate(state);
     }
 
+    // ── Physical keyboard (DeX, desktop windowing). Not part of upstream gpui-mobile. ──
+
+    /** The accent of a dead key waiting for its letter, or 0. */
+    private int pendingAccent;
+
+    private static native void nativeKey(int keyCode, int action, int metaState, int unicodeChar);
+
+    /** A key of a real keyboard that the app, not the system, should get. */
+    private static boolean isPhysicalKey(KeyEvent event) {
+        InputDevice device = event.getDevice();
+        // The same test as the native side makes before it leaves a key to this method.
+        if (device == null || device.isVirtual() || event.getDeviceId() <= 0) return false;
+        if ((event.getSource() & InputDevice.SOURCE_KEYBOARD) != InputDevice.SOURCE_KEYBOARD) return false;
+        switch (event.getKeyCode()) {
+            case KeyEvent.KEYCODE_BACK:
+            case KeyEvent.KEYCODE_HOME:
+            case KeyEvent.KEYCODE_MENU:
+            case KeyEvent.KEYCODE_POWER:
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_MUTE:
+                return false;
+            default:
+                return !KeyEvent.isMediaSessionKey(event.getKeyCode());
+        }
+    }
+
+    /** Whether a real keyboard is attached and open: then keys are typed, not composed by an IME. */
+    private boolean hasPhysicalKeyboard() {
+        Configuration config = getResources().getConfiguration();
+        return config.keyboard == Configuration.KEYBOARD_QWERTY
+                && config.hardKeyboardHidden != Configuration.HARDKEYBOARDHIDDEN_YES;
+    }
+
+    /**
+     * Keys of a physical keyboard go straight to the native side, with the character the
+     * keyboard's layout gives them (Shift, AltGr and dead keys applied). NativeActivity's input
+     * queue only has the key code, and the hidden text field that serves the on-screen keyboard
+     * would otherwise take them.
+     */
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        int action = event.getAction();
+        if ((action != KeyEvent.ACTION_DOWN && action != KeyEvent.ACTION_UP) || !isPhysicalKey(event)) {
+            return super.dispatchKeyEvent(event);
+        }
+        int meta = event.getMetaState();
+        int unicode = 0;
+        // Ctrl and Meta make shortcuts, not text. Alt stays: it is AltGr on many layouts.
+        if ((meta & (KeyEvent.META_CTRL_ON | KeyEvent.META_META_ON)) == 0) {
+            unicode = event.getUnicodeChar(meta);
+            if (action == KeyEvent.ACTION_DOWN) {
+                if ((unicode & KeyCharacterMap.COMBINING_ACCENT) != 0) {
+                    pendingAccent = unicode & KeyCharacterMap.COMBINING_ACCENT_MASK;
+                    unicode = 0;
+                } else if (pendingAccent != 0 && unicode != 0) {
+                    int combined = KeyCharacterMap.getDeadChar(pendingAccent, unicode);
+                    if (combined != 0) unicode = combined;
+                    pendingAccent = 0;
+                }
+            } else if ((unicode & KeyCharacterMap.COMBINING_ACCENT) != 0) {
+                unicode = 0;
+            }
+        }
+        nativeKey(event.getKeyCode(), action, meta, unicode);
+        return true;
+    }
+
     public void gpuiShowKeyboard(int keyboardType, long session) {
         runOnUiThread(() -> {
+            // With a real keyboard there is no on-screen one to show, and focusing the hidden
+            // text field would hand the keys to the IME.
+            if (hasPhysicalKeyboard()) {
+                if (input != null) {
+                    input.reset(session);
+                    input.clearFocus();
+                }
+                return;
+            }
             if (input == null) {
                 input = new InputProxy();
                 input.setAlpha(0f);
